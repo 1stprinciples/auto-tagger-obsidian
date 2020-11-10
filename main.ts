@@ -1,9 +1,16 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
+console.log("Going to import rake-js")
+import * as rake from "rake-js";
+//import rake from "./rake-js";
 export default class MyPlugin extends Plugin {
-	onload() {
-		console.log('loading plugin');
+	settings: AutotaggerSettings;
+	onInit(){}
 
+	async onload() {
+		console.log('loading Auto tagger plugin');
+	    this.settings = (await this.loadData()) || new AutotaggerSettings();
+
+	    this.addSettingTab(new AutotaggerSettingTab(this.app, this));
 		this.addRibbonIcon('dice', 'Sample Plugin', () => {
 			new Notice('This is a notice!');
 		});
@@ -12,10 +19,8 @@ export default class MyPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
+			name: 'Create tags',
+			callback: () => this.onTrigger(),
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
@@ -28,7 +33,8 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+
+		this.addSettingTab(new AutotaggerSettingTab(this.app, this));
 
 		this.registerEvent(this.app.on('codemirror', (cm: CodeMirror.Editor) => {
 			console.log('codemirror', cm);
@@ -42,8 +48,53 @@ export default class MyPlugin extends Plugin {
 	}
 
 	onunload() {
-		console.log('unloading plugin');
+		console.log('unloading Auto tagger plugin');
 	}
+/* My code  */
+
+	getSelectedText(editor: any) {
+	if (editor.somethingSelected()) {
+	  return editor.getSelection();
+	} else {
+	  var wordBoundaries = this.getWordBoundaries(editor);
+	  editor.getDoc().setSelection(wordBoundaries.start, wordBoundaries.end);
+	  return editor.getSelection();
+	}
+	}
+
+	getWordBoundaries(editor: any) {
+	var cursor = editor.getCursor();
+	var line = cursor.line;
+	var word = editor.findWordAt({ line: line, ch: cursor.ch });
+	var wordStart = word.anchor.ch;
+	var wordEnd = word.head.ch;
+
+	return {
+	  start: { line: line, ch: wordStart },
+	  end: { line: line, ch: wordEnd },
+	};
+	}		
+
+	getTags(selectedText: string){
+		//const tags = rake(selectedText, { language: 'english' })
+		console.log(rake(selectedText, { language: 'english' }))
+		console.log(tags)
+		return tags
+	}
+
+	onTrigger(){
+		let activeLeaf: any = this.app.workspace.activeLeaf;
+	    let editor = activeLeaf.view.sourceMode.cmEditor;
+	    var cursor = editor.getCursor();
+	    var selectedText = this.getSelectedText(editor);
+    	console.log("Inside onTrigger")
+	    let tags = this.getTags(selectedText)
+
+	}
+
+
+
+
 }
 
 class SampleModal extends Modal {
@@ -53,7 +104,7 @@ class SampleModal extends Modal {
 
 	onOpen() {
 		let {contentEl} = this;
-		contentEl.setText('Woah!');
+		contentEl.setText("One day you will make this work! :)");
 	}
 
 	onClose() {
@@ -62,7 +113,13 @@ class SampleModal extends Modal {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
+/* to fill #test */
+class AutotaggerSettings {
+
+}
+
+/* The settings tab */
+class AutotaggerSettingTab extends PluginSettingTab {
 	display(): void {
 		let {containerEl} = this;
 
